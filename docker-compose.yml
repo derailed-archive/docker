@@ -1,0 +1,50 @@
+services:
+  api:
+    container_name: derailed-api
+    restart: unless-stopped
+    depends_on:
+      - redis
+      - mongo
+      - gateway
+      - auth
+    ports:
+      - "8080:8080"
+    image: "ghcr.io/derailedapp/api:main"
+    environment:
+      - STORAGE_URI=redis://redis:6379
+      - MONGODB_URI=mongodb://mongo:27017
+      - GUILD_CHANNEL=gateway:50051
+      - USER_CHANNEL=gateway:50052
+
+  gateway:
+    container_name: derailed-gateway
+    restart: unless-stopped
+    depends_on:
+      - mongo
+      - auth
+    ports:
+      - "10000:10000"
+      - "50051:50051"
+      - "50052:50052"
+    image: "ghcr.io/derailedapp/gateway:main"
+    environment:
+      - MONGODB_URI=mongodb://mongo:27017
+
+  auth:
+    container_name: derailed-auth
+    restart: unless-stopped
+    ports:
+      - "4600:4600"
+    image: "ghcr.io/derailedapp/auth:main"
+
+  redis:
+    image: eqalpha/keydb
+    restart: unless-stopped
+
+  mongo:
+    image: mongo
+    ports:
+      - "27017:27017"
+    restart: unless-stopped
+    volumes:
+      - ./.data/db:/data/db
